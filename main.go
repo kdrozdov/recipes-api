@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
+	"golang.org/x/exp/slices"
 )
 
 type Recipe struct {
@@ -50,13 +51,9 @@ func UpdateRecipeHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	index := -1
-	for i, r := range recipes {
-		if r.ID == id {
-			index = i
-			break
-		}
-	}
+	index := slices.IndexFunc(recipes, func(item Recipe) bool {
+		return item.ID == id
+	})
 	if index == -1 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		return
@@ -65,10 +62,24 @@ func UpdateRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipe)
 }
 
+func DeleteRecipeHandler(c *gin.Context) {
+	id := c.Param("id")
+	index := slices.IndexFunc(recipes, func(item Recipe) bool {
+		return item.ID == id
+	})
+	if index == -1 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
+		return
+	}
+	recipes = slices.Delete(recipes, index, index+1)
+	c.JSON(http.StatusOK, gin.H{"error": "Recipe has been deleted"})
+}
+
 func main() {
 	router := gin.Default()
 	router.POST("/recipes", NewRecipeHandler)
 	router.PUT("/recipes/:id", UpdateRecipeHandler)
+	router.DELETE("/recipes/:id", DeleteRecipeHandler)
 	router.GET("/recipes", ListRecipesHandler)
 	router.Run()
 }
