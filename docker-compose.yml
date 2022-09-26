@@ -25,5 +25,16 @@ services:
       ME_CONFIG_MONGODB_URL: mongo://admin:password@mongo:27017/
     depends_on:
       - mongo
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server
+    volumes:
+      - redis_data_volume:/data
+
 volumes:
   mongodb_data_volume:
+  redis_data_volume:
