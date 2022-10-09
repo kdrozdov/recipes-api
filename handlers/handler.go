@@ -41,6 +41,7 @@ func NewRecipesHandler(ctx context.Context, collection *mongo.Collection, redisC
 //   '400':
 //	   description: Invalid input
 func (handler *RecipesHandler) NewRecipe(c *gin.Context) {
+
 	var recipe models.Recipe
 	if err := c.ShouldBindJSON(&recipe); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

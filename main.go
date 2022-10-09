@@ -51,12 +51,27 @@ func init() {
 	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
 }
 
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.GetHeader("X-API-KEY") != os.Getenv("X_API_KEY") {
+			c.AbortWithStatus(401)
+		}
+		c.Next()
+	}
+}
+
 func main() {
 	router := gin.Default()
-	router.POST("/recipes", recipesHandler.NewRecipe)
-	router.PUT("/recipes/:id", recipesHandler.UpdateRecipe)
-	router.DELETE("/recipes/:id", recipesHandler.DeleteRecipe)
 	router.GET("/recipes/search", recipesHandler.SearchRecipes)
 	router.GET("/recipes", recipesHandler.ListRecipes)
+
+	authorized := router.Group("/")
+	{
+		authorized.Use(AuthMiddleware())
+		authorized.POST("/recipes", recipesHandler.NewRecipe)
+		authorized.PUT("/recipes/:id", recipesHandler.UpdateRecipe)
+		authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipe)
+	}
+
 	router.Run()
 }
