@@ -16,13 +16,13 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"os"
+	"recipes-api/config"
 	"recipes-api/handlers"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -31,20 +31,22 @@ import (
 var recipesHandler *handlers.RecipesHandler
 
 func init() {
+	config.LoadConfig("./config")
+
 	ctx := context.Background()
-	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
+	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("db.uri")))
 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		log.Fatal()
 	}
 	log.Println("Connected to mongodb")
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
+	collection := client.Database(viper.GetString("db.name")).Collection("recipes")
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
+		Addr:     viper.GetString("redis.address"),
+		Password: viper.GetString("redis.password"),
+		DB:       viper.GetInt("redis.db"),
 	})
 
-	fmt.Println(redisClient.Ping(ctx))
+	log.Println("Redis", redisClient.Ping(ctx))
 
 	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
 }
