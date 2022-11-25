@@ -20,6 +20,8 @@ import (
 	"recipes-api/config"
 	"recipes-api/handlers"
 
+	"github.com/gin-contrib/sessions"
+	redisStore "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,11 +32,14 @@ import (
 var (
 	recipesHandler *handlers.RecipesHandler
 	authHandler    *handlers.AuthHandler
+	cfg            *config.Config
 )
 
 func init() {
+	var err error
+
 	// Read config
-	cfg, err := config.NewConfig()
+	cfg, err = config.NewConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,7 +48,7 @@ func init() {
 
 	// Connect to MongoDB
 	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DB.URI))
-	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
+	if err = client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		log.Fatal("can't connect to mongodb")
 	}
 	log.Println("connected to mongodb")
@@ -65,7 +70,11 @@ func init() {
 func main() {
 	router := gin.Default()
 
+	store, _ := redisStore.NewStore(10, "tcp", cfg.Redis.Address, cfg.Redis.Password, []byte("secret"))
+	router.Use(sessions.Sessions("recipes_api", store))
+
 	router.POST("/signin", authHandler.SignInHandler)
+	router.POST("/signout", authHandler.SignOutHandler)
 	router.GET("/recipes/search", recipesHandler.SearchRecipes)
 	router.GET("/recipes", recipesHandler.ListRecipes)
 

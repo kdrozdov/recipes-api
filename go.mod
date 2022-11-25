@@ -24,6 +24,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.1.0 // indirect
+	github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
@@ -33,6 +34,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
 	github.com/goccy/go-json v0.9.7 // indirect
+	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
@@ -44,6 +46,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
+	github.com/rs/xid v1.4.0
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
