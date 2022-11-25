@@ -22,52 +22,56 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var recipesHandler *handlers.RecipesHandler
+var (
+	recipesHandler *handlers.RecipesHandler
+	authHandler    *handlers.AuthHandler
+)
 
 func init() {
-	config.LoadConfig("./config")
+	// Read config
+	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
-	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("db.uri")))
+
+	// Connect to MongoDB
+	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(cfg.DB.URI))
 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
-		log.Fatal()
+		log.Fatal("can't connect to mongodb")
 	}
-	log.Println("Connected to mongodb")
-	collection := client.Database(viper.GetString("db.name")).Collection("recipes")
+	log.Println("connected to mongodb")
+	collectionRecipes := client.Database(cfg.DB.Name).Collection("recipes")
+	collectionUsers := client.Database(cfg.DB.Name).Collection("users")
+
+	// Connect to redis
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     viper.GetString("redis.address"),
-		Password: viper.GetString("redis.password"),
-		DB:       viper.GetInt("redis.db"),
+		Addr:     cfg.Redis.Address,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DBNumber,
 	})
+	log.Println("redis", redisClient.Ping(ctx))
 
-	log.Println("Redis", redisClient.Ping(ctx))
-
-	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
-}
-
-func AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if c.GetHeader("X-API-KEY") != os.Getenv("X_API_KEY") {
-			c.AbortWithStatus(401)
-		}
-		c.Next()
-	}
+	recipesHandler = handlers.NewRecipesHandler(ctx, collectionRecipes, redisClient)
+	authHandler = handlers.NewAuthHandler(ctx, collectionUsers, cfg)
 }
 
 func main() {
 	router := gin.Default()
+
+	router.POST("/signin", authHandler.SignInHandler)
 	router.GET("/recipes/search", recipesHandler.SearchRecipes)
 	router.GET("/recipes", recipesHandler.ListRecipes)
 
 	authorized := router.Group("/")
+	authorized.Use(authHandler.AuthMiddleware())
 	{
-		authorized.Use(AuthMiddleware())
 		authorized.POST("/recipes", recipesHandler.NewRecipe)
 		authorized.PUT("/recipes/:id", recipesHandler.UpdateRecipe)
 		authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipe)

@@ -1,0 +1,17 @@
+app:
+  name: 'Recipes API'
+  version: '1.0.0'
+  env: 'development'
+
+db:
+  uri: 'mongodb://admin:password@localhost:27017/test?authSource=admin'
+  name: 'recipes_api_dev'
+
+redis:
+  address: 'localhost:6379'
+  password: ''
+  db_number: 0
+
+auth:
+  jwt_secret: 'secret'
+  jwt_ttl: 5
